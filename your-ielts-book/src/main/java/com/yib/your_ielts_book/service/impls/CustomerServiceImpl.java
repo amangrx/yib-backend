@@ -2,6 +2,8 @@ package com.yib.your_ielts_book.service.impls;
 
 import com.yib.your_ielts_book.dto.CustomerDTO;
 import com.yib.your_ielts_book.dto.LoginDTO;
+import com.yib.your_ielts_book.exception.ResourceNotFoundException;
+import com.yib.your_ielts_book.mapper.CustomerMapper;
 import com.yib.your_ielts_book.model.Customer;
 import com.yib.your_ielts_book.repo.CustomerRepo;
 import com.yib.your_ielts_book.response.LoginResponse;
@@ -10,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -26,17 +30,26 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public String registerNewCustomer(CustomerDTO customerDTO) {
-        Customer customer = new Customer(
-                customerDTO.getCustomerId(),
-                customerDTO.getAddress(),
-                customerDTO.getName(),
-                customerDTO.getCustomerType(),
-                customerDTO.getEmail(),
-                customerDTO.getPhoneNumber(),
-                this.passwordEncoder.encode(customerDTO.getPassword())
-        );
+        Customer customer = CustomerMapper.mapToCustomer(customerDTO);
+        customer.setPassword(passwordEncoder.encode(customerDTO.getPassword()));
         customerRepo.save(customer);
         return "Customer " + customer.getName() + " has been successfully registered!";
+    }
+
+    @Override
+    public List<CustomerDTO> getAllCustomer() {
+        List<Customer> customers = customerRepo.findAll();
+        return customers
+                .stream().map(CustomerMapper::mapToCustomerDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteCustomer(int customerId) {
+        Customer customer = customerRepo.findById(customerId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Customer not found"));
+        customerRepo.delete(customer);
     }
 
     @Override
@@ -44,7 +57,7 @@ public class CustomerServiceImpl implements CustomerService {
         Optional<Customer> customer = customerRepo.findByEmail(loginDTO.getEmail());
         if (customer.isPresent()) {
             Customer customerDB = customer.get();
-            Boolean passwordMatch = passwordEncoder.matches(loginDTO.getPassword(), customerDB.getPassword());
+            boolean passwordMatch = passwordEncoder.matches(loginDTO.getPassword(), customerDB.getPassword());
             if (passwordMatch) {
                 return new LoginResponse("Login successful.", true);
             }else {
