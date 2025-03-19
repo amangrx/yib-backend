@@ -14,4 +14,6 @@ public interface ResourceService {
     ResourceDTO saveResource(ResourceDTO resourceDTO, MultipartFile resourceFile, MultipartFile additionalFile) throws IOException;
 
     void deleteResource(int resourceId);
+
+    ResourceDTO getResourceById(int resourceId);
 }

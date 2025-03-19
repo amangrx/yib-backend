@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,15 +34,20 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public ResourceDTO saveResource(ResourceDTO resourceDTO, MultipartFile resourceFile, MultipartFile additionalFile) throws IOException {
-        // Ensure the upload directory exists
-        Path directory = Paths.get(uploadDirectory);
-        if (!Files.exists(directory)) {
-            Files.createDirectories(directory);
+        // Determine the category subdirectory
+        String category = (resourceDTO.getCategory() != null && !resourceDTO.getCategory().isEmpty())
+                ? resourceDTO.getCategory().toLowerCase().replaceAll("\\s+", "_") // Normalize category name
+                : "uncategorized";
+
+        // Create category-specific upload directory
+        Path categoryDirectory = Paths.get(uploadDirectory, category);
+        if (!Files.exists(categoryDirectory)) {
+            Files.createDirectories(categoryDirectory);
         }
 
         // Save the main resource file
-        String fileName = System.currentTimeMillis() + "_" + resourceFile.getOriginalFilename();
-        Path filePath = directory.resolve(fileName);
+        String fileName = UUID.randomUUID() + "_" + resourceFile.getOriginalFilename();
+        Path filePath = categoryDirectory.resolve(fileName);
         Files.write(filePath, resourceFile.getBytes());
 
         // Set main file details
@@ -51,8 +57,8 @@ public class ResourceServiceImpl implements ResourceService {
 
         // Save the additional file (if provided)
         if (additionalFile != null && !additionalFile.isEmpty()) {
-            String additionalFileName = System.currentTimeMillis() + "_" + additionalFile.getOriginalFilename();
-            Path additionalFilePath = directory.resolve(additionalFileName);
+            String additionalFileName = UUID.randomUUID() + "_" + additionalFile.getOriginalFilename();
+            Path additionalFilePath = categoryDirectory.resolve(additionalFileName);
             Files.write(additionalFilePath, additionalFile.getBytes());
 
             // Set additional file details separately
@@ -66,6 +72,7 @@ public class ResourceServiceImpl implements ResourceService {
         resource = resourceRepo.save(resource);
         return ResourceMapper.mapToResourceDTO(resource);
     }
+
 
     @Override
     public List<ResourceDTO> getAllResource() {
@@ -93,5 +100,31 @@ public class ResourceServiceImpl implements ResourceService {
         }
         // Delete resource from database
         resourceRepo.delete(resource);
+    }
+
+    @Override
+    public ResourceDTO getResourceById(int resourceId) throws ResourceNotFoundException {
+        // Retrieve the resource entity from the database by ID
+        Resource resource = resourceRepo.findById(resourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with ID: " + resourceId));
+
+        // Convert entity to DTO
+        ResourceDTO resourceDTO = ResourceMapper.mapToResourceDTO(resource);
+
+        // Verify that the file exists in the file system
+        Path filePath = Paths.get(resource.getFilePath());
+        if (!Files.exists(filePath)) {
+            throw new ResourceNotFoundException("Resource file not found on disk: " + resource.getFilePath());
+        }
+
+        // If there's an additional resource, verify that file exists too
+        if (resource.getAdditionalResourcePath() != null && !resource.getAdditionalResourcePath().isEmpty()) {
+            Path additionalFilePath = Paths.get(resource.getAdditionalResourcePath());
+            if (!Files.exists(additionalFilePath)) {
+                throw new ResourceNotFoundException("Additional resource file not found on disk: " +
+                        resource.getAdditionalResourcePath());
+            }
+        }
+        return resourceDTO;
     }
 }

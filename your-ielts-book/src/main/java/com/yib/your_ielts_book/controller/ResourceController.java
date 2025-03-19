@@ -22,6 +22,7 @@ public class ResourceController {
     public ResponseEntity<ResourceDTO> addResource(@RequestPart("resource") ResourceDTO resourceDTO,
                                                    @RequestPart("resourceFile") MultipartFile resourceFile,
                                                    @RequestPart(value = "additionalFile", required = false) MultipartFile additionalFile) throws IOException {
+        System.out.println("Received Resource: " + resourceDTO.getDifficultyLevel());
         ResourceDTO savedResource = resourceService.saveResource(resourceDTO, resourceFile, additionalFile);
         return new ResponseEntity<>(savedResource, HttpStatus.CREATED);
     }
@@ -30,6 +31,12 @@ public class ResourceController {
     public ResponseEntity<List<ResourceDTO>> getResources() {
         List<ResourceDTO> resourceList = resourceService.getAllResource();
         return new ResponseEntity<>(resourceList, HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/resource_details/{resourceId}")
+    public ResponseEntity<ResourceDTO> getResourceById(@PathVariable("resourceId") int resourceId) {
+        ResourceDTO resourceDTO = resourceService.getResourceById(resourceId);
+        return ResponseEntity.ok(resourceDTO);
     }
 
     @DeleteMapping("/delete/{id}")
