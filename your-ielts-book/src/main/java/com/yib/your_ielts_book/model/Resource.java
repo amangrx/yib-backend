@@ -18,6 +18,8 @@ public class Resource {
     @Column(nullable = false)
     private String category;
 
+    private String difficultyLevel;
+
     private String fileName;
     @Column(nullable = false)
     private String filePath;

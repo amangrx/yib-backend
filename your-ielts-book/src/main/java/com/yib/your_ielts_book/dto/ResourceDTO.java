@@ -12,11 +12,10 @@ public class ResourceDTO {
     private String additionalResourcePath;
     private String additionalResourceType;
     private String category;
-
+    private String difficultyLevel;
     private String fileName;
     private String filePath;
     private String fileType;
     private String resourceName;
-
     private int resourceId;
 }
