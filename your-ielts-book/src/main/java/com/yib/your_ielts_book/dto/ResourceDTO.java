@@ -1,5 +1,6 @@
 package com.yib.your_ielts_book.dto;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ public class ResourceDTO {
     private String fileName;
     private String filePath;
     private String fileType;
+    @NotEmpty(message = "Resource name cannot be empty.")
     private String resourceName;
     private int resourceId;
 }
