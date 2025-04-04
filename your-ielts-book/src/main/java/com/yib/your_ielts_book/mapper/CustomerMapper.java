@@ -8,11 +8,14 @@ public class CustomerMapper {
         return new Customer(
                 customerDTO.getCustomerId(),
                 customerDTO.getAddress(),
-                customerDTO.getName(),
-                "User",
                 customerDTO.getEmail(),
+                customerDTO.getName(),
+                customerDTO.getPassword(),
                 customerDTO.getPhoneNumber(),
-                customerDTO.getPassword()
+                customerDTO.getPictureName(),
+                customerDTO.getPictureType(),
+                customerDTO.getProfilePicture(),
+                null
         );
     }
 
@@ -20,11 +23,14 @@ public class CustomerMapper {
         return new CustomerDTO(
                 customer.getCustomerId(),
                 customer.getAddress(),
-                customer.getName(),
-                customer.getCustomerType(),
                 customer.getEmail(),
+                customer.getName(),
+                customer.getPassword(),
                 customer.getPhoneNumber(),
-                customer.getPassword()
+                customer.getPictureName(),
+                customer.getPictureType(),
+                customer.getProfilePicture(),
+                customer.getRole()
         );
     }
 }

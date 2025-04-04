@@ -1,7 +1,6 @@
 package com.yib.your_ielts_book.service;
 
 import com.yib.your_ielts_book.dto.ResourceDTO;
-import com.yib.your_ielts_book.model.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
