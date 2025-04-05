@@ -9,5 +9,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ResponseMessage {
     String message;
-    Boolean status;
+    Boolean success;
+    String token;
+
+    public boolean isSuccess() {
+        return success;
+    }
+
 }

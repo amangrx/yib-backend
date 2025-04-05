@@ -1,5 +1,6 @@
 package com.yib.your_ielts_book.service.impls;
 
+import com.yib.your_ielts_book.config.JWTService;
 import com.yib.your_ielts_book.dto.CustomerDTO;
 import com.yib.your_ielts_book.dto.LoginDTO;
 import com.yib.your_ielts_book.exception.ResourceAlreadyExistsException;
@@ -11,13 +12,16 @@ import com.yib.your_ielts_book.repo.CustomerRepo;
 import com.yib.your_ielts_book.response.ResponseMessage;
 import com.yib.your_ielts_book.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,11 +29,15 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepo customerRepo;
     private final PasswordEncoder passwordEncoder ;
+    private final AuthenticationManager authenticationManager;
+    private final JWTService jwtService;
 
     @Autowired
-    public CustomerServiceImpl(CustomerRepo customerRepo, PasswordEncoder passwordEncoder) {
+    public CustomerServiceImpl(CustomerRepo customerRepo, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JWTService jwtService) {
         this.customerRepo = customerRepo;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
     //Method to register new customer.
@@ -85,17 +93,20 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public ResponseMessage LoginCustomer(LoginDTO loginDTO) {
-        Optional<Customer> customer = customerRepo.findByEmail(loginDTO.getEmail());
-        if (customer.isPresent()) {
-            Customer customerDB = customer.get();
-            boolean passwordMatch = passwordEncoder.matches(loginDTO.getPassword(), customerDB.getPassword());
-            if (passwordMatch) {
-                return new ResponseMessage("Login successful.", true);
-            }else {
-                return new ResponseMessage("Login failed.", false);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword())
+            );
+
+            if (authentication.isAuthenticated()) {
+                String token = jwtService.generateToken(loginDTO.getEmail());
+                return new ResponseMessage("Login successful. Token: ", true, token);
+            } else {
+                return new ResponseMessage("Authentication failed.", false, null);
             }
-        }else{
-            return new ResponseMessage("Email does not exist.", false);
+        } catch (AuthenticationException e) {
+            return new ResponseMessage("Invalid email or password.", false, null);
         }
     }
+
 }
