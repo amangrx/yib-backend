@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/yib/customers")
 public class CustomerController {
@@ -29,9 +30,15 @@ public class CustomerController {
     }
 
     //Login customer REST API
-    @PostMapping(path = "/login")
+    @PostMapping("/login")
     public ResponseEntity<?> loginCustomer(@RequestBody LoginDTO loginDTO) {
-        ResponseMessage responseMessage = customerService.LoginCustomer(loginDTO);
-        return ResponseEntity.ok(responseMessage);
+        ResponseMessage response = customerService.LoginCustomer(loginDTO);
+
+        if (response.isSuccess()) {
+            return ResponseEntity.ok(response); // HTTP 200 OK
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // HTTP 401 Unauthorized
+        }
     }
+
 }

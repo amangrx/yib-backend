@@ -18,10 +18,10 @@ public class TestimonialController {
     @Autowired
     public TestimonialService testimonialService;
 
-    @PostMapping
-    public ResponseEntity<ResponseMessage> addTestimonial(@Valid @RequestBody TestimonialDTO testimonialDTO) {
-        ResponseMessage response = testimonialService.addTestimonial(testimonialDTO);
-        return response.getStatus() ? ResponseEntity.ok(response)
-                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
+//    @PostMapping
+//    public ResponseEntity<ResponseMessage> addTestimonial(@Valid @RequestBody TestimonialDTO testimonialDTO) {
+//        ResponseMessage response = testimonialService.addTestimonial(testimonialDTO);
+//        return response.getStatus() ? ResponseEntity.ok(response)
+//                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//    }
 }

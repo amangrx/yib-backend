@@ -22,9 +22,9 @@ public class TestimonialServiceImpl implements TestimonialService{
         try {
             Testimonial testimonial = TestimonialMapper.mapToTestimonial(testimonialDTO);
             testimonialRepo.save(testimonial);
-            return new ResponseMessage("Your comment has been submitted", true);
+            return new ResponseMessage("Your comment has been submitted", true, null);
         } catch (Exception e) {
-            return new ResponseMessage("An error occurred.", false);
+            return new ResponseMessage("An error occurred.", false, null);
         }
     }
 
