@@ -39,8 +39,10 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("api/yib/customers/register", "api/yib/customers/login")
-                        .permitAll()
+                        .requestMatchers("api/yib/customers/**", "api/yib/resources/**").permitAll()
+                        .requestMatchers("api/yib/admin/**").hasRole("ADMIN")
+                        .requestMatchers("api/yib/expert/**").hasRole("EXPERT")
+                        .requestMatchers("api/yib/auth/**").hasRole("CUSTOMER")
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session ->
