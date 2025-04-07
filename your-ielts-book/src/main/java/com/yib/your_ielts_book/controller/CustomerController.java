@@ -2,8 +2,11 @@ package com.yib.your_ielts_book.controller;
 
 import com.yib.your_ielts_book.dto.CustomerDTO;
 import com.yib.your_ielts_book.dto.LoginDTO;
+import com.yib.your_ielts_book.dto.TestimonialDTO;
 import com.yib.your_ielts_book.response.ResponseMessage;
 import com.yib.your_ielts_book.service.CustomerService;
+import com.yib.your_ielts_book.service.TestimonialService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +20,9 @@ public class CustomerController {
 
     @Autowired
     private CustomerService customerService;
+
+    @Autowired
+    private TestimonialService testimonialService;
 
     //Register customer REST API
     @PostMapping(path = "/register")
@@ -39,6 +45,14 @@ public class CustomerController {
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response); // HTTP 401 Unauthorized
         }
+    }
+
+    //Contact us REST API
+    @PostMapping("/comments")
+    public ResponseEntity<ResponseMessage> addTestimonial(@Valid @RequestBody TestimonialDTO testimonialDTO) {
+        ResponseMessage response = testimonialService.addTestimonial(testimonialDTO);
+        return response.getSuccess() ? ResponseEntity.ok(response)
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
 }

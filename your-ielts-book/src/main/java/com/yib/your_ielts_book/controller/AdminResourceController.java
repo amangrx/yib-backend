@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/yib/admin/resources")
+@RequestMapping("/api/yib/admin")
 public class AdminResourceController {
 
     @Autowired
