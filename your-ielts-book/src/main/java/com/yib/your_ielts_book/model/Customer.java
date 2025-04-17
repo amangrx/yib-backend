@@ -8,7 +8,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -46,6 +48,9 @@ public class Customer implements UserDetails {
     @Column(nullable = false)
     private UserRole role;
 
+    @OneToMany(mappedBy = "customer")
+    private Set<CustomerResource> customerResources = new HashSet<>();
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(() -> "ROLE_" + role.name());
@@ -80,5 +85,7 @@ public class Customer implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+
 }
 

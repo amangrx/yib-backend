@@ -1,9 +1,11 @@
 package com.yib.your_ielts_book.service.impls;
 
+import com.yib.your_ielts_book.config.JWTService;
 import com.yib.your_ielts_book.dto.ResourceDTO;
 import com.yib.your_ielts_book.exception.ResourceNotFoundException;
 import com.yib.your_ielts_book.mapper.ResourceMapper;
 import com.yib.your_ielts_book.model.Resource;
+import com.yib.your_ielts_book.model.ResourceStatus;
 import com.yib.your_ielts_book.repo.ResourceRepo;
 import com.yib.your_ielts_book.service.ResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -23,56 +26,13 @@ import java.util.stream.Collectors;
 public class ResourceServiceImpl implements ResourceService {
 
     private final ResourceRepo resourceRepo;
-
-    @Value("${file.upload-dir}")
-    private String uploadDirectory;
+    private final JWTService jwtService;
 
     @Autowired
-    public ResourceServiceImpl(ResourceRepo resourceRepo) {
+    public ResourceServiceImpl(ResourceRepo resourceRepo, JWTService jwtService) {
         this.resourceRepo = resourceRepo;
+        this.jwtService = jwtService;
     }
-
-    @Override
-    public ResourceDTO saveResource(ResourceDTO resourceDTO, MultipartFile resourceFile, MultipartFile additionalFile) throws IOException {
-        // Determine the category subdirectory
-        String category = (resourceDTO.getCategory() != null && !resourceDTO.getCategory().isEmpty())
-                ? resourceDTO.getCategory().toLowerCase().replaceAll("\\s+", "_") // Normalize category name
-                : "uncategorized";
-
-        // Create category-specific upload directory
-        Path categoryDirectory = Paths.get(uploadDirectory, category);
-        if (!Files.exists(categoryDirectory)) {
-            Files.createDirectories(categoryDirectory);
-        }
-
-        // Save the main resource file
-        String fileName = UUID.randomUUID() + "_" + resourceFile.getOriginalFilename();
-        Path filePath = categoryDirectory.resolve(fileName);
-        Files.write(filePath, resourceFile.getBytes());
-
-        // Set main file details
-        resourceDTO.setFileName(fileName);
-        resourceDTO.setFileType(resourceFile.getContentType());
-        resourceDTO.setFilePath(filePath.toString());
-
-        // Save the additional file (if provided)
-        if (additionalFile != null && !additionalFile.isEmpty()) {
-            String additionalFileName = UUID.randomUUID() + "_" + additionalFile.getOriginalFilename();
-            Path additionalFilePath = categoryDirectory.resolve(additionalFileName);
-            Files.write(additionalFilePath, additionalFile.getBytes());
-
-            // Set additional file details separately
-            resourceDTO.setAdditionalResourceName(additionalFileName);
-            resourceDTO.setAdditionalResourceType(additionalFile.getContentType());
-            resourceDTO.setAdditionalResourcePath(additionalFilePath.toString());
-        }
-
-        // Convert DTO to Entity and save
-        Resource resource = ResourceMapper.mapToResource(resourceDTO);
-        resource = resourceRepo.save(resource);
-        return ResourceMapper.mapToResourceDTO(resource);
-    }
-
 
     @Override
     public List<ResourceDTO> getAllResource() {
@@ -85,46 +45,76 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public void deleteResource(int resourceId) {
         Resource resource = resourceRepo.findById(resourceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
-
-        // Delete the associated files from the storage
-        try {
-            if (resource.getFilePath() != null) {
-                Files.deleteIfExists(Paths.get(resource.getFilePath()));
-            }
-            if (resource.getAdditionalResourcePath() != null) {
-                Files.deleteIfExists(Paths.get(resource.getAdditionalResourcePath()));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error deleting files from storage", e);
-        }
-        // Delete resource from database
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with ID: " + resourceId));
         resourceRepo.delete(resource);
     }
 
+//    @Override
+//    public ResourceDTO getResourceById(int resourceId) throws ResourceNotFoundException {
+//        // Retrieve the resource entity from the database by ID
+//        Resource resource = resourceRepo.findById(resourceId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with ID: " + resourceId));
+//
+//        // Convert entity to DTO
+//        ResourceDTO resourceDTO = ResourceMapper.mapToResourceDTO(resource);
+//
+//        // Verify that the file exists in the file system
+//        Path filePath = Paths.get(resource.getFilePath());
+//        if (!Files.exists(filePath)) {
+//            throw new ResourceNotFoundException("Resource file not found on disk: " + resource.getFilePath());
+//        }
+//
+//        // If there's an additional resource, verify that file exists too
+//        if (resource.getAdditionalResourcePath() != null && !resource.getAdditionalResourcePath().isEmpty()) {
+//            Path additionalFilePath = Paths.get(resource.getAdditionalResourcePath());
+//            if (!Files.exists(additionalFilePath)) {
+//                throw new ResourceNotFoundException("Additional resource file not found on disk: " +
+//                        resource.getAdditionalResourcePath());
+//            }
+//        }
+//        return resourceDTO;
+//    }
+
     @Override
-    public ResourceDTO getResourceById(int resourceId) throws ResourceNotFoundException {
-        // Retrieve the resource entity from the database by ID
+    public ResourceDTO createResource(ResourceDTO resourceDTO, String jwt) {
+        try {
+            if (jwt.startsWith("Bearer ")) {
+                jwt = jwt.substring(7);
+            }
+            String name = jwtService.extractFullName(jwt);
+
+            Resource resource = ResourceMapper.mapToResource(resourceDTO);
+            resource.setAuthor(name);                   // Set author from JWT
+            resource.setStatus(ResourceStatus.PENDING); // Set default status to PENDING
+
+            resource = resourceRepo.save(resource);
+            return ResourceMapper.mapToResourceDTO(resource); // Return DTO
+        } catch (Exception ex) {
+            throw new RuntimeException("Error creating resource", ex);
+        }
+    }
+
+    @Override
+    public void updateStatus(int resourceId, String status) {
+        // Validate status
+        ResourceStatus newStatus;
+        try {
+            newStatus = ResourceStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid status: " + status);
+        }
+        // Find and update resource
         Resource resource = resourceRepo.findById(resourceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found with ID: " + resourceId));
+        resource.setStatus(newStatus);
+        resourceRepo.save(resource);
+    }
 
-        // Convert entity to DTO
-        ResourceDTO resourceDTO = ResourceMapper.mapToResourceDTO(resource);
-
-        // Verify that the file exists in the file system
-        Path filePath = Paths.get(resource.getFilePath());
-        if (!Files.exists(filePath)) {
-            throw new ResourceNotFoundException("Resource file not found on disk: " + resource.getFilePath());
-        }
-
-        // If there's an additional resource, verify that file exists too
-        if (resource.getAdditionalResourcePath() != null && !resource.getAdditionalResourcePath().isEmpty()) {
-            Path additionalFilePath = Paths.get(resource.getAdditionalResourcePath());
-            if (!Files.exists(additionalFilePath)) {
-                throw new ResourceNotFoundException("Additional resource file not found on disk: " +
-                        resource.getAdditionalResourcePath());
-            }
-        }
-        return resourceDTO;
+    @Override
+    public List<ResourceDTO> getApprovedResources() {
+        List<Resource> resources = resourceRepo.findByStatus(ResourceStatus.APPROVED);
+        return resources.stream()
+                .map(ResourceMapper::mapToResourceDTO)
+                .collect(Collectors.toList());
     }
 }
