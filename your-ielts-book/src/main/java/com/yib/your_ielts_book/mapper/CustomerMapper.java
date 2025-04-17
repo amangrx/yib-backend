@@ -3,6 +3,8 @@ package com.yib.your_ielts_book.mapper;
 import com.yib.your_ielts_book.dto.CustomerDTO;
 import com.yib.your_ielts_book.model.Customer;
 
+import java.util.HashSet;
+
 public class CustomerMapper {
     public static Customer mapToCustomer(CustomerDTO customerDTO) {
         return new Customer(
@@ -15,7 +17,8 @@ public class CustomerMapper {
                 customerDTO.getPictureName(),
                 customerDTO.getPictureType(),
                 customerDTO.getProfilePicture(),
-                null
+                customerDTO.getRole(),
+                new HashSet<>()
         );
     }
 
