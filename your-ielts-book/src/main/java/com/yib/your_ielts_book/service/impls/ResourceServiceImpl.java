@@ -10,6 +10,9 @@ import com.yib.your_ielts_book.repo.ResourceRepo;
 import com.yib.your_ielts_book.service.ResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,32 +52,6 @@ public class ResourceServiceImpl implements ResourceService {
         resourceRepo.delete(resource);
     }
 
-//    @Override
-//    public ResourceDTO getResourceById(int resourceId) throws ResourceNotFoundException {
-//        // Retrieve the resource entity from the database by ID
-//        Resource resource = resourceRepo.findById(resourceId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with ID: " + resourceId));
-//
-//        // Convert entity to DTO
-//        ResourceDTO resourceDTO = ResourceMapper.mapToResourceDTO(resource);
-//
-//        // Verify that the file exists in the file system
-//        Path filePath = Paths.get(resource.getFilePath());
-//        if (!Files.exists(filePath)) {
-//            throw new ResourceNotFoundException("Resource file not found on disk: " + resource.getFilePath());
-//        }
-//
-//        // If there's an additional resource, verify that file exists too
-//        if (resource.getAdditionalResourcePath() != null && !resource.getAdditionalResourcePath().isEmpty()) {
-//            Path additionalFilePath = Paths.get(resource.getAdditionalResourcePath());
-//            if (!Files.exists(additionalFilePath)) {
-//                throw new ResourceNotFoundException("Additional resource file not found on disk: " +
-//                        resource.getAdditionalResourcePath());
-//            }
-//        }
-//        return resourceDTO;
-//    }
-
     @Override
     public ResourceDTO createResource(ResourceDTO resourceDTO, String jwt) {
         try {
@@ -111,10 +88,28 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<ResourceDTO> getApprovedResources() {
-        List<Resource> resources = resourceRepo.findByStatus(ResourceStatus.APPROVED);
+    public Page<ResourceDTO> getApprovedResources(Pageable pageable) {
+        Page<Resource> approvedResources = resourceRepo.findByStatus(ResourceStatus.APPROVED, pageable);
+        return approvedResources.map(ResourceMapper::mapToResourceDTO);
+    }
+
+    @Override
+    public List<ResourceDTO> getResourceByExpert(String author) {
+        List<Resource> resources = resourceRepo.findByAuthor(author);
         return resources.stream()
                 .map(ResourceMapper::mapToResourceDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ResourceDTO getResourceById(int resourceId) {
+        Resource resources = resourceRepo.findById(resourceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found with ID: " + resourceId));
+        return ResourceMapper.mapToResourceDTO(resources);
+    }
+
+    @Override
+    public Page<Resource> searchByTitle(String title, PageRequest of) {
+        return resourceRepo.findByTitleContainingIgnoreCase(title, of);
     }
 }

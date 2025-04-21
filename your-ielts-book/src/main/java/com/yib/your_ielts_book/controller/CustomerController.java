@@ -4,12 +4,15 @@ import com.yib.your_ielts_book.dto.CustomerDTO;
 import com.yib.your_ielts_book.dto.LoginDTO;
 import com.yib.your_ielts_book.dto.ResourceDTO;
 import com.yib.your_ielts_book.dto.TestimonialDTO;
+import com.yib.your_ielts_book.model.Resource;
 import com.yib.your_ielts_book.response.ResponseMessage;
 import com.yib.your_ielts_book.service.CustomerService;
 import com.yib.your_ielts_book.service.ResourceService;
 import com.yib.your_ielts_book.service.TestimonialService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -17,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @Validated
@@ -58,16 +60,13 @@ public class CustomerController {
     }
 
     @GetMapping(path = "/resources")
-    public ResponseEntity<List<ResourceDTO>> getApprovedResources() {
-        List<ResourceDTO> approvedResourceList = resourceService.getApprovedResources();
-        return new ResponseEntity<>(approvedResourceList, HttpStatus.OK);
+    public ResponseEntity<Page<ResourceDTO>> getApprovedResources(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Page<ResourceDTO> approvedResourcePage = resourceService.getApprovedResources(PageRequest.of(page, size));
+        return new ResponseEntity<>(approvedResourcePage, HttpStatus.OK);
     }
-    //REST API to get all resources for library.
-//    @GetMapping(path = "/resources")
-//    public ResponseEntity<List<ResourceDTO>> getResources() {
-//        List<ResourceDTO> resourceList = resourceService.getAllResource();
-//        return new ResponseEntity<>(resourceList, HttpStatus.OK);
-//    }
 
     //Contact us REST API
     @PostMapping("/comments")
@@ -76,4 +75,14 @@ public class CustomerController {
         return response.getSuccess() ? ResponseEntity.ok(response)
                 : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<Resource>> searchResources(
+            @RequestParam String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        Page<Resource> resources = resourceService.searchByTitle(title, PageRequest.of(page, size));
+        return ResponseEntity.ok(resources);
+    }
 }
+
