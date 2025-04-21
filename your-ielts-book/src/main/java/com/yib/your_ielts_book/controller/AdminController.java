@@ -1,6 +1,5 @@
 package com.yib.your_ielts_book.controller;
 
-import com.yib.your_ielts_book.dto.CustomerDTO;
 import com.yib.your_ielts_book.dto.ResourceDTO;
 import com.yib.your_ielts_book.service.ResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
