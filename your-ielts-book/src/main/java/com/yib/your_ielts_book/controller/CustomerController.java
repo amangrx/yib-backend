@@ -1,14 +1,12 @@
 package com.yib.your_ielts_book.controller;
 
-import com.yib.your_ielts_book.dto.CustomerDTO;
-import com.yib.your_ielts_book.dto.LoginDTO;
-import com.yib.your_ielts_book.dto.ResourceDTO;
-import com.yib.your_ielts_book.dto.TestimonialDTO;
+import com.yib.your_ielts_book.dto.*;
 import com.yib.your_ielts_book.model.Resource;
 import com.yib.your_ielts_book.response.ResponseMessage;
 import com.yib.your_ielts_book.service.CustomerService;
 import com.yib.your_ielts_book.service.ResourceService;
 import com.yib.your_ielts_book.service.TestimonialService;
+import com.yib.your_ielts_book.service.WritingQuestionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @Validated
@@ -34,6 +33,9 @@ public class CustomerController {
 
     @Autowired
     private ResourceService resourceService;
+
+    @Autowired
+    private WritingQuestionService writingQuestionService;
 
     //Register customer REST API
     @PostMapping(path = "/register")
@@ -83,6 +85,13 @@ public class CustomerController {
             @RequestParam(defaultValue = "12") int size) {
         Page<Resource> resources = resourceService.searchByTitle(title, PageRequest.of(page, size));
         return ResponseEntity.ok(resources);
+    }
+
+    @GetMapping("/test/writing")
+    public ResponseEntity<List<WritingQuestionDTO>> getAllWritingQuestions() {
+        List<WritingQuestionDTO> questions = writingQuestionService.getAllWritingQuestions();
+        System.out.println(questions);
+        return ResponseEntity.ok(questions);
     }
 }
 

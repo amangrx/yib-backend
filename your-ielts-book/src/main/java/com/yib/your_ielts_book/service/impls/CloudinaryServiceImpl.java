@@ -14,7 +14,7 @@ import java.util.Map;
 public class CloudinaryServiceImpl implements CloudinaryService {
     private final Cloudinary cloudinary;
 
-    @Value("$(cloudinary.upload-folder)")
+    @Value("${cloudinary.upload-folder}")
     private String uploadFolder;
 
     public CloudinaryServiceImpl(Cloudinary cloudinary) {

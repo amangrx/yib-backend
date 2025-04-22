@@ -8,30 +8,29 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "questions")
+@Table(name = "tests")
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Inheritance(strategy = InheritanceType.JOINED)
-public class Question {
+public class Test {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private QuestionCategory category;
+    private int customerId;
+
+    private LocalDateTime startedAt;
+    private LocalDateTime submittedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private QuestionDifficulty difficulty;
+    private TestStatus status;
 
-    @Column(nullable = false)
-    private int expertId;
+    private int duration;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String createdBy;
-
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    private QuestionCategory questionCategory;
 }
