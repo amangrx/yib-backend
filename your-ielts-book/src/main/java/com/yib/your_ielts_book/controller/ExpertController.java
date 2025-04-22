@@ -2,7 +2,6 @@ package com.yib.your_ielts_book.controller;
 
 import com.yib.your_ielts_book.dto.ResourceDTO;
 import com.yib.your_ielts_book.dto.WritingQuestionDTO;
-import com.yib.your_ielts_book.model.WritingQuestion;
 import com.yib.your_ielts_book.service.QuestionService;
 import com.yib.your_ielts_book.service.ResourceService;
 import jakarta.validation.Valid;
@@ -35,10 +34,9 @@ public class ExpertController {
         }
     }
 
-    @GetMapping("/{name}/my-uploads")
-    public ResponseEntity<List<ResourceDTO>> getMyUploads(@RequestHeader("Authorization") String jwt,
-                                                          @PathVariable("name") String author){
-        List<ResourceDTO> myUploadsList = resourceService.getResourceByExpert(author);
+    @GetMapping("/my-uploads")
+    public ResponseEntity<List<ResourceDTO>> getMyUploads(@RequestHeader("Authorization") String jwt){
+        List<ResourceDTO> myUploadsList = resourceService.getResourceByExpertId(jwt);
         return new ResponseEntity<>(myUploadsList, HttpStatus.OK);
     }
 
@@ -46,7 +44,6 @@ public class ExpertController {
     public ResponseEntity<WritingQuestionDTO> createWritingQues(@ModelAttribute WritingQuestionDTO dto,
                                                                 @RequestHeader("Authorization") String jwt){
         WritingQuestionDTO writingQuestion = questionService.createWritingQues(dto, jwt);
-        System.out.println("controller" + writingQuestion);
         return new ResponseEntity<>(writingQuestion, HttpStatus.CREATED);
     }
 }

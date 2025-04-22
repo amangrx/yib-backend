@@ -20,7 +20,7 @@ public interface ResourceService {
 
     Page<ResourceDTO> getApprovedResources(Pageable pageable);
 
-    List<ResourceDTO> getResourceByExpert(String author);
+    List<ResourceDTO> getResourceByExpertId(String jwt);
 
     ResourceDTO getResourceById(int resourceId);
 

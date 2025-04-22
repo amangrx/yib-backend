@@ -28,14 +28,12 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public WritingQuestionDTO createWritingQues(WritingQuestionDTO dto, String jwt) {
-        System.out.println("Received JWT: " + jwt);
-        System.out.println("service first" + dto);
         try{
             if (jwt.startsWith("Bearer ")) {
                 jwt = jwt.substring(7);
             }
+            int expertId = jwtService.extractUserId(jwt);
             String name = jwtService.extractFullName(jwt);
-            System.out.println("Extracted name: " + name);
             if (dto.getImageFile() != null && !dto.getImageFile().isEmpty()) {
                 try {
                     dto.setImageUrl(cloudinaryService.uploadWritingImage(dto.getImageFile()));
@@ -43,14 +41,12 @@ public class QuestionServiceImpl implements QuestionService {
                     throw new RuntimeException("Failed to upload image", e);
                 }
             }
-            System.out.println("service second" + dto);
             WritingQuestion writingQuestion = WritingQuestionMapper.toEntity(dto);
             writingQuestion.setCategory(QuestionCategory.WRITING);
+            writingQuestion.setExpertId(expertId);
             writingQuestion.setCreatedBy(name);
             writingQuestion.setCreatedAt(LocalDateTime.now());
-            System.out.println("service third" + writingQuestion);
             WritingQuestion savedQuestion = writingQuestionRepo.save(writingQuestion);
-            System.out.println("service fourth" + writingQuestion);
             return WritingQuestionMapper.toDTO(savedQuestion);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);

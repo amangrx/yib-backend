@@ -35,6 +35,9 @@ public class Resource {
     private Date createdAt;
 
     @Column(nullable = false)
+    private int expertId;
+
+    @Column(nullable = false)
     private String author;
 
     @Enumerated(EnumType.STRING)

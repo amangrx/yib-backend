@@ -10,6 +10,7 @@ public class WritingQuestionMapper {
         WritingQuestion writingQuestion = new WritingQuestion();
         writingQuestion.setCategory(dto.getCategory());
         writingQuestion.setDifficulty(dto.getDifficulty());
+        writingQuestion.setExpertId(dto.getExpertId());
         writingQuestion.setCreatedBy(dto.getCreatedBy());
         writingQuestion.setCreatedAt(LocalDateTime.now());
         writingQuestion.setWritingTaskType(dto.getWritingTaskType());
@@ -24,6 +25,7 @@ public class WritingQuestionMapper {
         dto.setId(entity.getId());
         dto.setCategory(entity.getCategory());
         dto.setDifficulty(entity.getDifficulty());
+        dto.setExpertId(entity.getExpertId());
         dto.setCreatedBy(entity.getCreatedBy());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setWritingTaskType(entity.getWritingTaskType());

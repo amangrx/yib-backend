@@ -24,6 +24,7 @@ public class WritingQuestionDTO {
     @NotNull(message = "Difficulty is required")
     private QuestionDifficulty difficulty;
 
+    private int expertId;
     private String createdBy;
     private LocalDateTime createdAt;
 

@@ -58,11 +58,12 @@ public class ResourceServiceImpl implements ResourceService {
             if (jwt.startsWith("Bearer ")) {
                 jwt = jwt.substring(7);
             }
+            int expertId = jwtService.extractUserId(jwt);
             String name = jwtService.extractFullName(jwt);
-
             Resource resource = ResourceMapper.mapToResource(resourceDTO);
-            resource.setAuthor(name);                   // Set author from JWT
-            resource.setStatus(ResourceStatus.PENDING); // Set default status to PENDING
+            resource.setExpertId(expertId);
+            resource.setAuthor(name);
+            resource.setStatus(ResourceStatus.PENDING);
 
             resource = resourceRepo.save(resource);
             return ResourceMapper.mapToResourceDTO(resource); // Return DTO
@@ -94,11 +95,19 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<ResourceDTO> getResourceByExpert(String author) {
-        List<Resource> resources = resourceRepo.findByAuthor(author);
-        return resources.stream()
-                .map(ResourceMapper::mapToResourceDTO)
-                .collect(Collectors.toList());
+    public List<ResourceDTO> getResourceByExpertId(String jwt) {
+        try{
+            if (jwt.startsWith("Bearer ")) {
+                jwt = jwt.substring(7);
+            }
+            int expertId = jwtService.extractUserId(jwt);
+            List<Resource> resources = resourceRepo.findByExpertId(expertId);
+            return resources.stream()
+                    .map(ResourceMapper::mapToResourceDTO)
+                    .collect(Collectors.toList());
+        }catch (Exception e){
+            throw new RuntimeException("Error getting resource by expert ID.");
+        }
     }
 
     @Override

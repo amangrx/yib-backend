@@ -23,6 +23,7 @@ public class ResourceDTO {
     @NotEmpty(message = "Content cannot be empty.")
     private String content;
     private Date createdAt;
+    private int expertId;
     private String author;
     private ResourceStatus status;
     private ResourceType type;
