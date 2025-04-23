@@ -1,5 +1,6 @@
 package com.yib.your_ielts_book.controller;
 
+import com.yib.your_ielts_book.dto.ReadingAndListeningQuestionDTO;
 import com.yib.your_ielts_book.dto.ResourceDTO;
 import com.yib.your_ielts_book.dto.WritingQuestionDTO;
 import com.yib.your_ielts_book.service.QuestionService;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -45,5 +47,14 @@ public class ExpertController {
                                                                 @RequestHeader("Authorization") String jwt){
         WritingQuestionDTO writingQuestion = questionService.createWritingQues(dto, jwt);
         return new ResponseEntity<>(writingQuestion, HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/reading-listening", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ReadingAndListeningQuestionDTO> creatingReadingListeningQues(@ModelAttribute ReadingAndListeningQuestionDTO dto,
+                                                                            @RequestPart("pdfFile") MultipartFile pdfFile,
+                                                                            @RequestPart(value = "audioFile", required = false) MultipartFile audioFile,
+                                                                            @RequestHeader("Authorization") String jwt){
+        ReadingAndListeningQuestionDTO createdQues = questionService.creatingReadingListeningQues(dto, pdfFile, audioFile, jwt);
+        return new ResponseEntity<>(createdQues, HttpStatus.CREATED);
     }
 }

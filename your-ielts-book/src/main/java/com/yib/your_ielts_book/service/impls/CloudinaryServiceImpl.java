@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -33,5 +34,52 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         );
         Map<?, ?> uploadResult = cloudinary.uploader().upload(image.getBytes(), uploadOptions);
         return (String) uploadResult.get("secure_url");
+    }
+
+    @Override
+    public String uploadPdf(MultipartFile pdfFile) throws IOException {
+        // Create a temporary file
+        File tempFile = File.createTempFile("temp", pdfFile.getOriginalFilename());
+        pdfFile.transferTo(tempFile);
+
+        try {
+            Map<String, Object> uploadOptions = ObjectUtils.asMap(
+                    "folder", uploadFolder.endsWith("/") ?
+                            uploadFolder + "PdfFolder" :
+                            uploadFolder + "/PdfFolder",
+                    "resource_type", "auto",
+                    "format", "pdf"
+            );
+
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(tempFile, uploadOptions);
+            return (String) uploadResult.get("secure_url");
+        } finally {
+            if (tempFile.exists()) {
+                tempFile.delete();
+            }
+        }
+    }
+
+    @Override
+    public String uploadAudio(MultipartFile audioFile) throws IOException {
+        File tempFile = File.createTempFile("temp", audioFile.getOriginalFilename());
+        audioFile.transferTo(tempFile);
+
+        try {
+            Map<String, Object> uploadOptions = ObjectUtils.asMap(
+                    "folder", uploadFolder.endsWith("/") ?
+                            uploadFolder + "AudioFolder" :
+                            uploadFolder + "/AudioFolder",
+                    "resource_type", "video",
+                    "format", "mp3"
+            );
+
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(tempFile, uploadOptions);
+            return (String) uploadResult.get("secure_url");
+        } finally {
+            if (tempFile.exists()) {
+                tempFile.delete();
+            }
+        }
     }
 }
