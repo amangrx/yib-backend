@@ -4,6 +4,7 @@ import com.yib.your_ielts_book.model.QuestionCategory;
 import com.yib.your_ielts_book.model.QuestionDifficulty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReadingAndListeningQuestionDTO {
@@ -30,11 +32,18 @@ public class ReadingAndListeningQuestionDTO {
     @NotNull(message = "Title is required")
     private String title;
 
-    private transient MultipartFile pdfFile;
-    @NotNull(message = "Pdf is required.")
+    // For file paths (stored in database)
     private String pdfFilePath;
-
-    private transient MultipartFile audioFile;
     private String listeningAudioUrl;
+
+    // For frontend access (generated URLs)
+    private String pdfFileUrl;
+    private String audioFileUrl;
+
+    @NotNull(message = "Answers are required")
     private List<String> answers;
+
+    // Transient fields for file upload (not persisted)
+    private transient MultipartFile pdfFile;
+    private transient MultipartFile audioFile;
 }

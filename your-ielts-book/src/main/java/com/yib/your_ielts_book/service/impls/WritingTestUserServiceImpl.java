@@ -18,56 +18,43 @@ public class WritingTestUserServiceImpl implements WritingTestUserService {
     private final WritingTestUserRepo repo;
     private final WritingQuestionRepo questionRepo;
     private final JWTService jwtService;
+    private final WritingTestUserMapper mapper;
 
-    public WritingTestUserServiceImpl(WritingTestUserRepo repo, WritingQuestionRepo questionRepo, JWTService jwtService) {
+    public WritingTestUserServiceImpl(WritingTestUserRepo repo, WritingQuestionRepo questionRepo, JWTService jwtService, WritingTestUserMapper mapper) {
         this.repo = repo;
         this.questionRepo = questionRepo;
         this.jwtService = jwtService;
-    }
-
-    @Override
-    public WritingTestUserDTO startWritingTest(int questionId, String jwt) {
-        try {
-            if (jwt.startsWith("Bearer ")) {
-                jwt = jwt.substring(7);
-            }
-            int customerId = jwtService.extractUserId(jwt);
-
-            WritingQuestion question = questionRepo.findById(questionId)
-                    .orElseThrow(() -> new RuntimeException("Question not found"));
-
-            WritingTestUser newTest = new WritingTestUser();
-            newTest.setCustomerId(customerId);
-            newTest.setStartedAt(LocalDateTime.now());
-            newTest.setStatus(TestStatus.IN_PROGRESS);
-            newTest.setQuestionCategory(question.getCategory());
-            newTest.setWritingQuestion(question);
-
-            WritingTestUser savedTest = repo.save(newTest);
-            return WritingTestUserMapper.toDto(savedTest);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
-        }
+        this.mapper = mapper;
     }
 
     @Override
     public WritingTestUserDTO submitWritingTest(String jwt, WritingTestUserDTO userAnswerDTO) {
         try{
+            System.out.println("service first "+userAnswerDTO);
             if (jwt.startsWith("Bearer ")) {
                 jwt = jwt.substring(7);
             }
             int customerId = jwtService.extractUserId(jwt);
 
-            WritingTestUser submitTest = repo.findByIdAndCustomerId(userAnswerDTO.getId(), customerId)
-                    .orElseThrow(() -> new RuntimeException("Test not found"));
+            System.out.println("question id service ma "+ userAnswerDTO.getQuestionId());
+            WritingQuestion question = questionRepo.findById(userAnswerDTO.getQuestionId())
+                    .orElseThrow(() -> new RuntimeException("Question not found"));
 
-            submitTest.setSubmittedAt(LocalDateTime.now());
-            submitTest.setStatus(TestStatus.SUBMITTED);
-            submitTest.setDuration(userAnswerDTO.getDuration());
-            submitTest.setAnswer(userAnswerDTO.getAnswer());
 
-            WritingTestUser savedTest = repo.save(submitTest);
-            return WritingTestUserMapper.toDto(savedTest);
+            WritingTestUser newTest = new WritingTestUser();
+
+            newTest.setCustomerId(customerId);
+            newTest.setSubmittedAt(LocalDateTime.now());
+            newTest.setStatus(TestStatus.SUBMITTED);
+            newTest.setDuration(userAnswerDTO.getDuration());
+            newTest.setQuestionCategory(question.getCategory());
+            newTest.setQuestionId(userAnswerDTO.getQuestionId());
+            newTest.setWritingQuestion(question);
+            newTest.setAnswer(userAnswerDTO.getAnswer());
+            System.out.println("submit garna lako "+ newTest);
+
+            WritingTestUser savedTest = repo.save(newTest);
+            return mapper.toDTO(savedTest);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }

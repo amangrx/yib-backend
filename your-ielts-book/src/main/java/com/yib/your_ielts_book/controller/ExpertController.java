@@ -55,6 +55,6 @@ public class ExpertController {
                                                                             @RequestPart(value = "audioFile", required = false) MultipartFile audioFile,
                                                                             @RequestHeader("Authorization") String jwt){
         ReadingAndListeningQuestionDTO createdQues = questionService.creatingReadingListeningQues(dto, pdfFile, audioFile, jwt);
-        return new ResponseEntity<>(createdQues, HttpStatus.CREATED);
+        return ResponseEntity.ok(createdQues);
     }
 }

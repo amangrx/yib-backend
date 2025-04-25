@@ -30,8 +30,8 @@ public class WritingQuestionServiceImpl implements WritingQuestionService {
 
     @Override
     public WritingQuestionDTO getWritingQuestionById(int questionId) {
-        WritingQuestion answerDetail = writingQuestionRepo.findById(questionId)
+        WritingQuestion detail = writingQuestionRepo.findById(questionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Question not found"));
-        return WritingQuestionMapper.toDTO(answerDetail);
+        return WritingQuestionMapper.toDTO(detail);
     }
 }

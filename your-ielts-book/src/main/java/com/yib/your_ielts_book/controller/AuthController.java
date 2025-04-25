@@ -1,5 +1,6 @@
 package com.yib.your_ielts_book.controller;
 
+import com.yib.your_ielts_book.dto.ReadingAndListeningQuestionDTO;
 import com.yib.your_ielts_book.dto.ResourceDTO;
 import com.yib.your_ielts_book.dto.WritingQuestionDTO;
 import com.yib.your_ielts_book.dto.WritingTestUserDTO;
@@ -20,13 +21,15 @@ public class AuthController {
     private final ResourceService resourceService;
     private final WritingQuestionService writingQuestionService;
     private final WritingTestUserService writingTestUserService;
+    private final ReadingAndListeningQuestionService readingAndListeningQuestionService;
 
-    public AuthController(AuthService authService, CustomerResourceService customerResourcService, ResourceService resourceService, WritingQuestionService writingQuestionService, WritingTestUserService writingTestUserService) {
+    public AuthController(AuthService authService, CustomerResourceService customerResourcService, ResourceService resourceService, WritingQuestionService writingQuestionService, WritingTestUserService writingTestUserService, ReadingAndListeningQuestionService readingAndListeningQuestionService) {
         this.authService = authService;
         this.customerResourceService = customerResourcService;
         this.resourceService = resourceService;
         this.writingQuestionService = writingQuestionService;
         this.writingTestUserService = writingTestUserService;
+        this.readingAndListeningQuestionService = readingAndListeningQuestionService;
     }
 
     @GetMapping("/check")
@@ -47,24 +50,29 @@ public class AuthController {
         return new ResponseEntity<>(resourceDetail, HttpStatus.OK);
     }
 
-    @GetMapping("/answers/{questionId}")
+    @GetMapping("/detail/{questionId}")
     public ResponseEntity<WritingQuestionDTO> getWritingQuestionById(@PathVariable("questionId") int questionId,
                                                                      @RequestHeader("Authorization") String jwt) {
-        WritingQuestionDTO answerDetail = writingQuestionService.getWritingQuestionById(questionId);
-        System.out.println(answerDetail);
-        return new ResponseEntity<>(answerDetail, HttpStatus.OK);
-    }
-
-    @PostMapping("/start/{questionId}")
-    public ResponseEntity<WritingTestUserDTO> startWritingTest(@RequestHeader("Authorization") String jwt,
-                                                               @PathVariable int questionId) {
-        return ResponseEntity.ok(writingTestUserService.startWritingTest(questionId, jwt));
+        WritingQuestionDTO detail = writingQuestionService.getWritingQuestionById(questionId);
+        return new ResponseEntity<>(detail, HttpStatus.OK);
     }
 
     @PostMapping("/submit")
     public ResponseEntity<WritingTestUserDTO> submitWritingTest(@RequestHeader("Authorization") String jwt,
                                                                 @RequestBody @Valid WritingTestUserDTO userAnswerDTO) {
-        System.out.println("controller"+ userAnswerDTO);
         return ResponseEntity.ok(writingTestUserService.submitWritingTest(jwt, userAnswerDTO));
+    }
+
+    @GetMapping("/reading-listening-answer/{questionId}")
+    public ResponseEntity<ReadingAndListeningQuestionDTO> getReadingAndListeningQuestionById(@PathVariable("questionId") int questionId,
+                                                                                 @RequestHeader("Authorization") String jwt) {
+        ReadingAndListeningQuestionDTO answerDetail = readingAndListeningQuestionService.getReadingAndListeningQuestionsById(questionId);
+        return new ResponseEntity<>(answerDetail, HttpStatus.OK);
+    }
+
+    @PostMapping("/reading-listening/submit")
+    public ResponseEntity<ReadingAndListeningQuestionDTO> submitReadingOrListeningTest(@RequestHeader("Authorization") String jwt,
+                                                                @RequestBody @Valid ReadingAndListeningQuestionDTO userAnswerDTO) {
+        return ResponseEntity.ok(readingAndListeningQuestionService.submitReadingOrListeningTest(jwt, userAnswerDTO));
     }
 }

@@ -21,7 +21,6 @@ public class Test {
     @Column(nullable = false)
     private int customerId;
 
-    private LocalDateTime startedAt;
     private LocalDateTime submittedAt;
 
     @Enumerated(EnumType.STRING)
@@ -33,4 +32,7 @@ public class Test {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private QuestionCategory questionCategory;
+
+    @Column(name = "question_id", nullable = false)
+    private Integer questionId;
 }
