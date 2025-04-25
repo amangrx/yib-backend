@@ -2,6 +2,7 @@ package com.yib.your_ielts_book.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Builder
 @PrimaryKeyJoinColumn(name = "question_id")
 public class ReadingAndListeningQuestion extends Question {
     @Column(nullable = false)

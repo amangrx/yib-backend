@@ -33,7 +33,8 @@ public class SecurityConfig {
     };
 
     private static final String [] USER_ROUTES ={
-            "/api/yib/customers/**"
+            "/api/yib/customers/**",
+            "/api/files/**"
     };
 
     private final UserDetailsService userDetailsService;
@@ -56,7 +57,7 @@ public class SecurityConfig {
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
         corsConfiguration.setAllowCredentials(true);
-        corsConfiguration.setExposedHeaders(List.of("Authorization"));
+        corsConfiguration.setExposedHeaders(List.of("Authorization", "Content-Range", "Accept-Ranges"));
 
 
          return http

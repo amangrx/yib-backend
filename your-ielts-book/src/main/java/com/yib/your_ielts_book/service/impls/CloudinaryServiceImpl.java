@@ -38,48 +38,34 @@ public class CloudinaryServiceImpl implements CloudinaryService {
 
     @Override
     public String uploadPdf(MultipartFile pdfFile) throws IOException {
-        // Create a temporary file
-        File tempFile = File.createTempFile("temp", pdfFile.getOriginalFilename());
-        pdfFile.transferTo(tempFile);
+        Map<String, Object> uploadOptions = ObjectUtils.asMap(
+                "folder", uploadFolder.endsWith("/") ?
+                        uploadFolder + "PdfFolder" :
+                        uploadFolder + "/PdfFolder",
+                "resource_type", "raw",  // MUST USE "raw" FOR PDFs
+                "public_id", pdfFile.getOriginalFilename()  // Optional: Set a readable filename
+        );
 
-        try {
-            Map<String, Object> uploadOptions = ObjectUtils.asMap(
-                    "folder", uploadFolder.endsWith("/") ?
-                            uploadFolder + "PdfFolder" :
-                            uploadFolder + "/PdfFolder",
-                    "resource_type", "auto",
-                    "format", "pdf"
-            );
+        // Log the upload attempt
+        System.out.println("Uploading PDF: " + pdfFile.getOriginalFilename());
 
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(tempFile, uploadOptions);
-            return (String) uploadResult.get("secure_url");
-        } finally {
-            if (tempFile.exists()) {
-                tempFile.delete();
-            }
-        }
+        Map<?, ?> uploadResult = cloudinary.uploader().upload(pdfFile.getBytes(), uploadOptions);
+
+        // Log Cloudinary's response
+        System.out.println("Cloudinary Response: " + uploadResult);
+
+        return (String) uploadResult.get("secure_url");
     }
 
     @Override
     public String uploadAudio(MultipartFile audioFile) throws IOException {
-        File tempFile = File.createTempFile("temp", audioFile.getOriginalFilename());
-        audioFile.transferTo(tempFile);
-
-        try {
-            Map<String, Object> uploadOptions = ObjectUtils.asMap(
-                    "folder", uploadFolder.endsWith("/") ?
-                            uploadFolder + "AudioFolder" :
-                            uploadFolder + "/AudioFolder",
-                    "resource_type", "video",
-                    "format", "mp3"
-            );
-
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(tempFile, uploadOptions);
-            return (String) uploadResult.get("secure_url");
-        } finally {
-            if (tempFile.exists()) {
-                tempFile.delete();
-            }
-        }
+        Map<String, Object> uploadOptions = ObjectUtils.asMap(
+                "folder", uploadFolder.endsWith("/") ?
+                        uploadFolder + "AudioFolder" :
+                        uploadFolder + "/AudioFolder",
+                "resource_type", "video"
+        );
+        Map<?, ?> uploadResult = cloudinary.uploader().upload(audioFile.getBytes(), uploadOptions);
+        return (String) uploadResult.get("secure_url");
     }
 }

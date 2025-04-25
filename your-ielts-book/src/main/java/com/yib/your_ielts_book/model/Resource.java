@@ -52,4 +52,5 @@ public class Resource {
 
     @OneToMany(mappedBy = "resource")
     private Set<CustomerResource> customerResources = new HashSet<>();
+
 }
