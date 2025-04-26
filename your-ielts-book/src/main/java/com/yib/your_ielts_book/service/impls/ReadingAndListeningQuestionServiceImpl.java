@@ -1,5 +1,6 @@
 package com.yib.your_ielts_book.service.impls;
 
+import com.yib.your_ielts_book.config.JWTService;
 import com.yib.your_ielts_book.dto.ReadingAndListeningQuestionDTO;
 import com.yib.your_ielts_book.exception.ResourceNotFoundException;
 import com.yib.your_ielts_book.mapper.ReadingAndListeningQuestionMapper;
@@ -20,10 +21,12 @@ public class ReadingAndListeningQuestionServiceImpl implements ReadingAndListeni
 
     private final ReadingAndListeningQuestionRepo readingAndListeningQuestionRepo;
     private final ReadingAndListeningQuestionMapper readingAndListeningQuestionMapper;
+    private final JWTService jwtService;
 
-    public ReadingAndListeningQuestionServiceImpl(ReadingAndListeningQuestionRepo readingAndListeningQuestionRepo, ReadingAndListeningQuestionMapper readingAndListeningQuestionMapper) {
+    public ReadingAndListeningQuestionServiceImpl(ReadingAndListeningQuestionRepo readingAndListeningQuestionRepo, ReadingAndListeningQuestionMapper readingAndListeningQuestionMapper, JWTService jwtService) {
         this.readingAndListeningQuestionRepo = readingAndListeningQuestionRepo;
         this.readingAndListeningQuestionMapper = readingAndListeningQuestionMapper;
+        this.jwtService = jwtService;
     }
 
     @Override

@@ -30,16 +30,13 @@ public class WritingTestUserServiceImpl implements WritingTestUserService {
     @Override
     public WritingTestUserDTO submitWritingTest(String jwt, WritingTestUserDTO userAnswerDTO) {
         try{
-            System.out.println("service first "+userAnswerDTO);
             if (jwt.startsWith("Bearer ")) {
                 jwt = jwt.substring(7);
             }
             int customerId = jwtService.extractUserId(jwt);
 
-            System.out.println("question id service ma "+ userAnswerDTO.getQuestionId());
             WritingQuestion question = questionRepo.findById(userAnswerDTO.getQuestionId())
                     .orElseThrow(() -> new RuntimeException("Question not found"));
-
 
             WritingTestUser newTest = new WritingTestUser();
 
@@ -51,7 +48,6 @@ public class WritingTestUserServiceImpl implements WritingTestUserService {
             newTest.setQuestionId(userAnswerDTO.getQuestionId());
             newTest.setWritingQuestion(question);
             newTest.setAnswer(userAnswerDTO.getAnswer());
-            System.out.println("submit garna lako "+ newTest);
 
             WritingTestUser savedTest = repo.save(newTest);
             return mapper.toDTO(savedTest);
