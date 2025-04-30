@@ -14,4 +14,6 @@ public interface WritingTestUserService {
     WritingTestAnswerResponseDTO getWritingTestAnswer(int testId);
 
     ReviewResponseDTO submitTestReview(int testId, @Valid ReviewWritingRequestDTO reviewDTO, String jwt);
+
+    List<WritingTestUserDTO> getTestByCustomerId(String jwt);
 }
