@@ -34,6 +34,9 @@ public class Payment {
     @Column(unique = true)
     private String transactionId;
 
+    private String pidx;
+    private String khaltiTransactionId;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

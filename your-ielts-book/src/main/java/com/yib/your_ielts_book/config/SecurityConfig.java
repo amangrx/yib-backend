@@ -24,12 +24,13 @@ import java.util.List;
 public class SecurityConfig {
 
     private static final String [] ADMIN_ROUTES ={
-            "/api/yib/admin/**"
+            "/api/yib/admin/**",
     };
 
     private static final String [] AUTH_ROUTES ={
             "/api/yib/auth/**",
-            "/api/yib/expert/**"
+            "/api/yib/expert/**",
+            "/api/yib/payments/**",
     };
 
     private static final String [] USER_ROUTES ={
@@ -53,8 +54,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        corsConfiguration.setAllowedHeaders(List.of("Authorization", "Authentication", "Cache-Control", "Content-Type"));
+        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "Patch"));
         corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setExposedHeaders(List.of("Authorization", "Content-Range", "Accept-Ranges"));
