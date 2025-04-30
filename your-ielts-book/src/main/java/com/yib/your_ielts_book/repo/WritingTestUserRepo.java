@@ -1,5 +1,6 @@
 package com.yib.your_ielts_book.repo;
 
+import com.yib.your_ielts_book.model.Test;
 import com.yib.your_ielts_book.model.TestStatus;
 import com.yib.your_ielts_book.model.WritingTestUser;
 import com.yib.your_ielts_book.projection.ReviewTestProjection;
@@ -30,4 +31,6 @@ public interface WritingTestUserRepo extends JpaRepository<WritingTestUser, Inte
             "JOIN WritingQuestion wq ON t.questionId = wq.id " +
             "WHERE wq.expertId = :expertId")
     List<ReviewTestProjection> findTestsForExpertReview(@Param("expertId") int expertId);
+
+    List<WritingTestUser> findByCustomerId(int customerId);
 }

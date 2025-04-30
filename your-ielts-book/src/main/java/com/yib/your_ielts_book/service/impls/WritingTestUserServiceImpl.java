@@ -117,4 +117,21 @@ public class WritingTestUserServiceImpl implements WritingTestUserService {
         response.setMessage("Review submitted successfully");
         return response;
     }
+
+    @Override
+    public List<WritingTestUserDTO> getTestByCustomerId(String jwt) {
+        try{
+            if (jwt.startsWith("Bearer ")) {
+                jwt = jwt.substring(7);
+            }
+            int customerId = jwtService.extractUserId(jwt);
+            List<WritingTestUser> tests = repo.findByCustomerId(customerId);
+
+            return tests.stream()
+                    .map(mapper::toDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

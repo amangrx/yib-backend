@@ -1,12 +1,16 @@
 package com.yib.your_ielts_book.controller;
 
 import com.yib.your_ielts_book.dto.*;
+import com.yib.your_ielts_book.model.Test;
+import com.yib.your_ielts_book.model.WritingTestUser;
 import com.yib.your_ielts_book.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @RestController
@@ -72,7 +76,13 @@ public class AuthController {
     @PostMapping("/reading-listening/submit")
     public ResponseEntity<ReadingAndListeningTestUserDTO> submitReadingOrListeningTest(@RequestHeader("Authorization") String jwt,
                                                                 @RequestBody @Valid ReadingAndListeningTestUserDTO userAnswerDTO) {
-        System.out.println("controller ma "+ userAnswerDTO);
         return ResponseEntity.ok(readingAndListeningTestUserService.submitReadingOrListeningTest(jwt, userAnswerDTO));
+    }
+
+    @GetMapping("/dashboard/tests")
+    public ResponseEntity<List<WritingTestUserDTO>> getTestByCustomerId(@RequestHeader("Authorization") String jwt){
+        List<WritingTestUserDTO> tests = writingTestUserService.getTestByCustomerId(jwt);
+        System.out.println(tests);
+        return ResponseEntity.ok(tests);
     }
 }
