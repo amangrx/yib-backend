@@ -1,10 +1,9 @@
 package com.yib.your_ielts_book.controller;
 
-import com.yib.your_ielts_book.dto.ReadingAndListeningQuestionDTO;
-import com.yib.your_ielts_book.dto.ResourceDTO;
-import com.yib.your_ielts_book.dto.WritingQuestionDTO;
+import com.yib.your_ielts_book.dto.*;
 import com.yib.your_ielts_book.service.QuestionService;
 import com.yib.your_ielts_book.service.ResourceService;
+import com.yib.your_ielts_book.service.WritingTestUserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +23,9 @@ public class ExpertController {
 
     @Autowired
     private QuestionService questionService;
+
+    @Autowired
+    private WritingTestUserService writingTestUserService;
 
     @PostMapping("/resource")
     public ResponseEntity<ResourceDTO> createResources(@Valid @RequestBody ResourceDTO resourceDTO,
@@ -56,5 +58,25 @@ public class ExpertController {
                                                                             @RequestHeader("Authorization") String jwt){
         ReadingAndListeningQuestionDTO createdQues = questionService.creatingReadingListeningQues(dto, pdfFile, audioFile, jwt);
         return ResponseEntity.ok(createdQues);
+    }
+
+    @GetMapping("/all/tests")
+    public List<ReviewWritingTestDTO> getAllTestByExpert(@RequestHeader("Authorization") String jwt){
+        return writingTestUserService.getTestsForExpertReview(jwt);
+    }
+
+    @GetMapping("/test/{testId}")
+    public ResponseEntity<WritingTestAnswerResponseDTO> getUserTestAnswer(@RequestHeader("Authorization") String jwt,
+                                              @PathVariable("testId") int testId){
+        WritingTestAnswerResponseDTO responseDTO = writingTestUserService.getWritingTestAnswer(testId);
+        return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+    }
+
+    @PutMapping("/{testId}/review")
+    public ResponseEntity<ReviewResponseDTO> submitTestReview(@PathVariable("testId") int testId,
+                                                                     @Valid @RequestBody ReviewWritingRequestDTO reviewDTO,
+                                                                     @RequestHeader("Authorization") String jwt){
+        ReviewResponseDTO response = writingTestUserService.submitTestReview(testId, reviewDTO, jwt);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
