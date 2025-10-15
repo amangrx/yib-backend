@@ -102,4 +102,19 @@ public class CustomerServiceImpl implements CustomerService {
         customerRepo.delete(customer);
     }
 
+    @Override
+    public CustomerDTO getUserDetailsById(String jwt) {
+        try{
+            if (jwt.startsWith("Bearer ")) {
+                jwt = jwt.substring(7);
+            }
+            int id = jwtService.extractUserId(jwt);
+            Customer customer = customerRepo.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+            return CustomerMapper.mapToCustomerDTO(customer);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

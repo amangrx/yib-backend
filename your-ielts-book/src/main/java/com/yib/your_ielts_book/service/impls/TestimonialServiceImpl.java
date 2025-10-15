@@ -8,6 +8,9 @@ import com.yib.your_ielts_book.response.ResponseMessage;
 import com.yib.your_ielts_book.service.TestimonialService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class TestimonialServiceImpl implements TestimonialService{
 
@@ -26,6 +29,14 @@ public class TestimonialServiceImpl implements TestimonialService{
         } catch (Exception e) {
             return new ResponseMessage("An error occurred.", false, null);
         }
+    }
+
+    @Override
+    public List<TestimonialDTO> getTestimonials(String jwt) {
+        return testimonialRepo.findAll()
+                .stream()
+                .map(TestimonialMapper::mapToTestimonialDTO)
+                .collect(Collectors.toList());
     }
 
 }

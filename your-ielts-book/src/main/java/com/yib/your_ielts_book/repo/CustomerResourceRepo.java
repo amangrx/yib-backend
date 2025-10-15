@@ -20,4 +20,14 @@ public interface CustomerResourceRepo extends JpaRepository<CustomerResource, In
             @Param("resourceId") int resourceId
     );
     boolean existsByCustomerAndResource(Customer customer, Resource resource);
+
+    Optional<CustomerResource> findByCustomerAndResource(Customer customer, Resource resource);
+
+    // Alternative method using IDs if you prefer (add this if the above doesn't work)
+    @Query("SELECT cr FROM CustomerResource cr WHERE cr.customer.customerId = :customerId AND cr.resource.resourceId = :resourceId")
+    Optional<CustomerResource> findByCustomerIdAndResourceId(@Param("customerId") int customerId, @Param("resourceId") int resourceId);
+
+    // Alternative existence check using IDs
+    @Query("SELECT COUNT(cr) > 0 FROM CustomerResource cr WHERE cr.customer.customerId = :customerId AND cr.resource.resourceId = :resourceId")
+    boolean existsByCustomerIdAndResourceId(@Param("customerId") int customerId, @Param("resourceId") int resourceId);
 }

@@ -1,7 +1,9 @@
 package com.yib.your_ielts_book.controller;
 
 import com.yib.your_ielts_book.dto.ResourceDTO;
+import com.yib.your_ielts_book.dto.TestimonialDTO;
 import com.yib.your_ielts_book.service.ResourceService;
+import com.yib.your_ielts_book.service.TestimonialService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,8 @@ public class AdminController {
 
     @Autowired
     private ResourceService resourceService;
+    @Autowired
+    private TestimonialService testimonialService;
 
     @GetMapping(path = "/resources")
     public ResponseEntity<List<ResourceDTO>> getResources(@RequestHeader("Authorization") String jwt) {
@@ -36,6 +40,12 @@ public class AdminController {
                                                        @PathVariable("status") String status) {
         resourceService.updateStatus(resourceId, status);
         return ResponseEntity.ok("Resource with ID " + resourceId + " has been updated successfully.");
+    }
+
+    @GetMapping(path = "/testimonials")
+    public ResponseEntity<String> getTestimonials(@RequestHeader("Authorization") String jwt) {
+        List<TestimonialDTO> testimonialDTO = testimonialService.getTestimonials(jwt);
+        return new ResponseEntity<>(testimonialDTO.toString(), HttpStatus.OK);
     }
 
     //    Get all customer REST API

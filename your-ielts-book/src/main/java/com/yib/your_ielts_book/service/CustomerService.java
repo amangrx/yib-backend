@@ -16,4 +16,6 @@ public interface CustomerService {
 
     List<CustomerDTO> getAllCustomer();
     void deleteCustomer(int customerId);
+
+    CustomerDTO getUserDetailsById(String jwt);
 }

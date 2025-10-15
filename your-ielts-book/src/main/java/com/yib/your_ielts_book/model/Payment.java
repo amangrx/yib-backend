@@ -37,6 +37,10 @@ public class Payment {
     private String pidx;
     private String khaltiTransactionId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus status = PaymentStatus.INITIATED;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -51,6 +55,9 @@ public class Payment {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
+        if (this.status == null) {
+            this.status = PaymentStatus.INITIATED;
+        }
     }
 
     @PreUpdate
@@ -62,5 +69,14 @@ public class Payment {
     public void addCustomerResource(CustomerResource customerResource) {
         this.customerResources.add(customerResource);
         customerResource.setPayment(this);
+    }
+
+    // Enum for payment status
+    public enum PaymentStatus {
+        INITIATED,
+        PENDING,
+        COMPLETED,
+        FAILED,
+        REFUNDED
     }
 }

@@ -2,42 +2,22 @@ package com.yib.your_ielts_book.mapper;
 
 import com.yib.your_ielts_book.dto.ResourceDTO;
 import com.yib.your_ielts_book.model.Resource;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
-
+@Component
 public class ResourceMapper {
-    //Mapping to resource dto
-    public static Resource mapToResource(ResourceDTO resourceDTO) {
-        return new Resource(
-                resourceDTO.getResourceId(),
-                resourceDTO.getTitle(),
-                resourceDTO.getCategory(),
-                resourceDTO.getDescription(),
-                resourceDTO.getContent(),
-                resourceDTO.getCreatedAt(),
-                resourceDTO.getExpertId(),
-                resourceDTO.getAuthor(),
-                resourceDTO.getStatus(),
-                resourceDTO.getType(),
-                resourceDTO.getPrice(),
-                new HashSet<>()
-        );
+
+    private final ModelMapper modelMapper;
+
+    public ResourceMapper(ModelMapper modelMapper) {
+        this.modelMapper = modelMapper;
+    }
+    public ResourceDTO toResourceDTO(Resource resource) {
+        return modelMapper.map(resource, ResourceDTO.class);
     }
 
-    //Mapping to resource
-    public static ResourceDTO mapToResourceDTO(Resource resource) {
-        return new ResourceDTO(
-                resource.getResourceId(),
-                resource.getTitle(),
-                resource.getCategory(),
-                resource.getDescription(),
-                resource.getContent(),
-                resource.getCreatedAt(),
-                resource.getExpertId(),
-                resource.getAuthor(),
-                resource.getStatus(),
-                resource.getType(),
-                resource.getPrice()
-        );
+    public Resource toResourceEntity(ResourceDTO resourceDTO) {
+        return modelMapper.map(resourceDTO, Resource.class);
     }
 }

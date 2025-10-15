@@ -1,8 +1,6 @@
 package com.yib.your_ielts_book.controller;
 
 import com.yib.your_ielts_book.dto.*;
-import com.yib.your_ielts_book.model.Test;
-import com.yib.your_ielts_book.model.WritingTestUser;
 import com.yib.your_ielts_book.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -10,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @RestController
@@ -19,15 +19,17 @@ public class AuthController {
 
     private final AuthService authService;
     private final CustomerResourceService customerResourceService;
+    private final CustomerService customerService;
     private final ResourceService resourceService;
     private final WritingQuestionService writingQuestionService;
     private final WritingTestUserService writingTestUserService;
     private final ReadingAndListeningQuestionService readingAndListeningQuestionService;
     private final ReadingAndListeningTestUserService readingAndListeningTestUserService;
 
-    public AuthController(AuthService authService, CustomerResourceService customerResourcService, ResourceService resourceService, WritingQuestionService writingQuestionService, WritingTestUserService writingTestUserService, ReadingAndListeningQuestionService readingAndListeningQuestionService, ReadingAndListeningTestUserService readingAndListeningTestUserService) {
+    public AuthController(AuthService authService, CustomerResourceService customerResourcService, CustomerService customerService, ResourceService resourceService, WritingQuestionService writingQuestionService, WritingTestUserService writingTestUserService, ReadingAndListeningQuestionService readingAndListeningQuestionService, ReadingAndListeningTestUserService readingAndListeningTestUserService) {
         this.authService = authService;
         this.customerResourceService = customerResourcService;
+        this.customerService = customerService;
         this.resourceService = resourceService;
         this.writingQuestionService = writingQuestionService;
         this.writingTestUserService = writingTestUserService;
@@ -41,9 +43,11 @@ public class AuthController {
     }
 
     @GetMapping("/check/pay/{resourceId}")
-    public boolean checkPayStatus(@RequestHeader("Authorization") String jwt,
-                                  @PathVariable("resourceId") int resourceId) {
-        return customerResourceService.checkPayStatus(jwt, resourceId);
+    public ResponseEntity<Map<String, Boolean>> checkPayStatus(
+            @RequestHeader("Authorization") String jwt,
+            @PathVariable("resourceId") int resourceId) {
+        boolean hasAccess = customerResourceService.checkPayStatus(jwt, resourceId);
+        return ResponseEntity.ok(Collections.singletonMap("hasPaid", hasAccess));
     }
 
     @GetMapping("/resource/{resourceId}")
@@ -84,5 +88,11 @@ public class AuthController {
         List<WritingTestUserDTO> tests = writingTestUserService.getTestByCustomerId(jwt);
         System.out.println(tests);
         return ResponseEntity.ok(tests);
+    }
+
+    @GetMapping("/user-details")
+    public ResponseEntity<CustomerDTO> getUserDetailsById(@RequestHeader("Authorization") String jwt){
+        CustomerDTO customerDTO = customerService.getUserDetailsById(jwt);
+        return new ResponseEntity<>(customerDTO, HttpStatus.OK);
     }
 }

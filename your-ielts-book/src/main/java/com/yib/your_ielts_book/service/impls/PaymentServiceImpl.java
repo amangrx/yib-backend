@@ -1,5 +1,6 @@
 package com.yib.your_ielts_book.service.impls;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yib.your_ielts_book.config.JWTService;
 import com.yib.your_ielts_book.exception.PaymentException;
@@ -16,6 +17,8 @@ import com.yib.your_ielts_book.repo.CustomerResourceRepo;
 import com.yib.your_ielts_book.repo.PaymentRepo;
 import com.yib.your_ielts_book.repo.ResourceRepo;
 import com.yib.your_ielts_book.service.PaymentService;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -23,6 +26,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -42,7 +46,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final JWTService jwtService;
     private final ObjectMapper objectMapper;
 
-    public PaymentServiceImpl(PaymentRepo paymentRepo, CustomerRepo customerRepo, ResourceRepo resourceRepo, CustomerResourceRepo customerResourceRepo, JWTService jwtService, ObjectMapper objectMapper) {
+    public PaymentServiceImpl(PaymentRepo paymentRepo, CustomerRepo customerRepo, ResourceRepo resourceRepo,
+                              CustomerResourceRepo customerResourceRepo, JWTService jwtService, ObjectMapper objectMapper) {
         this.paymentRepo = paymentRepo;
         this.customerRepo = customerRepo;
         this.resourceRepo = resourceRepo;
@@ -52,6 +57,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional
     public PaymentResponse initiatePayment(KhaltiPaymentRequest request, String jwt, int resourceId) {
         try {
             if (jwt.startsWith("Bearer ")) {
@@ -73,71 +79,108 @@ public class PaymentServiceImpl implements PaymentService {
             Payment payment = new Payment();
             payment.setCustomer(customer);
             payment.setResource(resource);
-            payment.setAmount(request.getAmount()/100.0);
+            payment.setAmount(request.getAmount() / 100.0);
             payment.setTransactionId(UUID.randomUUID().toString());
             payment = paymentRepo.save(payment);
 
-            try {
-                // Call Khalti API to initiate payment
-                String khaltiResponse = callKhaltiApi(request, payment, resource, customer);
+            // Call Khalti API to initiate payment
+            String khaltiResponse = callKhaltiApi(request, payment, resource, customer);
 
-                // Extract pidx from Khalti response and store it in our payment record
-                String pidx = extractJsonField(khaltiResponse, "pidx");
-                payment.setPidx(pidx);
-                paymentRepo.save(payment);
+            // Extract pidx from Khalti response and store it in our payment record
+            String pidx = extractJsonField(khaltiResponse, "pidx");
+            payment.setPidx(pidx);
+            paymentRepo.save(payment);
 
-                // Create response
-                PaymentResponse response = new PaymentResponse();
-                response.setPidx(pidx);
-                response.setPaymentUrl(extractJsonField(khaltiResponse, "payment_url"));
-                response.setTransactionId(payment.getTransactionId());
-                response.setStatus("Initiated");
-                response.setAmount(payment.getAmount());
-                response.setResourceTitle(resource.getTitle());
-                response.setCustomerName(customer.getName());
-                return response;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+            // Create response
+            PaymentResponse response = new PaymentResponse();
+            response.setPidx(pidx);
+            response.setPaymentUrl(extractJsonField(khaltiResponse, "payment_url"));
+            response.setTransactionId(payment.getTransactionId());
+            response.setStatus("Initiated");
+            response.setAmount(payment.getAmount());
+            response.setResourceTitle(resource.getTitle());
+            response.setCustomerName(customer.getName());
+            return response;
+
+        } catch (Exception e) {
+            throw new PaymentException("Payment initiation failed: " + e.getMessage());
         }
     }
 
     @Override
+    @Transactional
     public PaymentResponse verifyPayment(String pidx) {
         try {
             System.out.println("Service received pidx: " + pidx);
+
+            // Validate pidx parameter
+            if (pidx == null || pidx.trim().isEmpty()) {
+                throw new PaymentException("PIDX parameter is required");
+            }
+
+            // Find payment record by pidx
+            Payment payment = paymentRepo.findByPidx(pidx)
+                    .orElseThrow(() -> new PaymentException("Payment record not found for pidx: " + pidx));
+
+            // Check if payment is already completed
+            if (payment.getStatus() == Payment.PaymentStatus.COMPLETED) {
+                throw new PaymentException("Payment already processed");
+            }
 
             // Call Khalti and get verification response
             String verificationResponse = callKhaltiVerification(pidx);
             System.out.println("Raw verification response: " + verificationResponse);
 
-            // Extract and validate status
-            String status = extractJsonField(verificationResponse, "status");
-            if (!"Completed".equals(status)) {
-                throw new PaymentException("Payment not completed. Status: " + status);
+            // Parse the JSON response
+            JsonNode responseNode = objectMapper.readTree(verificationResponse);
+
+            // Check if the response contains an error
+            if (responseNode.has("error_key") || responseNode.has("error")) {
+                String errorMessage = responseNode.has("error_key") ?
+                        responseNode.get("error_key").asText() :
+                        responseNode.get("error").asText();
+
+                // Update payment status to failed
+                payment.setStatus(Payment.PaymentStatus.FAILED);
+                paymentRepo.save(payment);
+
+                throw new PaymentException("Khalti verification error: " + errorMessage);
             }
 
-            // Extract pidx from response (in case it's different)
-            String responsePidx = extractJsonField(verificationResponse, "pidx");
-            if (pidx == null || pidx.isEmpty()) {
-                pidx = responsePidx;
+            // Extract and validate status
+            String khaltiStatus = extractJsonField(verificationResponse, "status");
+            System.out.println("Payment status from Khalti: " + khaltiStatus);
+
+            if (!"Completed".equalsIgnoreCase(khaltiStatus)) {
+                // Update payment status based on Khalti response
+                if ("Pending".equalsIgnoreCase(khaltiStatus)) {
+                    payment.setStatus(Payment.PaymentStatus.PENDING);
+                } else {
+                    payment.setStatus(Payment.PaymentStatus.FAILED);
+                }
+                paymentRepo.save(payment);
+                throw new PaymentException("Payment not completed. Status: " + khaltiStatus);
             }
 
             // Extract Khalti transaction ID
             String khaltiTransactionId = extractJsonField(verificationResponse, "transaction_id");
 
-            // Try to find payment record by pidx first
-            Payment payment = paymentRepo.findByPidx(pidx)
-                    .orElseThrow(() -> new PaymentException("Payment record not found for pidx: "));
+            // Verify payment hasn't already been processed (double-check with resource access)
+            if (customerResourceRepo.existsByCustomerAndResource(payment.getCustomer(), payment.getResource())) {
+                payment.setStatus(Payment.PaymentStatus.COMPLETED);
+                paymentRepo.save(payment);
+                throw new PaymentException("Payment already processed - resource access already granted");
+            }
 
-            // Update payment with Khalti-provided IDs for future reference
+            // Update payment status and details
             payment.setKhaltiTransactionId(khaltiTransactionId);
+            payment.setStatus(Payment.PaymentStatus.COMPLETED);
             paymentRepo.save(payment);
 
+            // Grant resource access
             grantResourceAccess(payment);
 
+            // Create response
             PaymentResponse response = new PaymentResponse();
             response.setPidx(pidx);
             response.setTransactionId(payment.getTransactionId());
@@ -148,7 +191,12 @@ public class PaymentServiceImpl implements PaymentService {
             response.setCustomerName(payment.getCustomer().getName());
 
             return response;
+
+        } catch (PaymentException e) {
+            throw e;
         } catch (Exception e) {
+            System.err.println("Payment verification error: " + e.getMessage());
+            e.printStackTrace();
             throw new PaymentException("Payment verification failed: " + e.getMessage());
         }
     }
@@ -170,8 +218,19 @@ public class PaymentServiceImpl implements PaymentService {
                     customer.getPhoneNumber()
             ));
 
+            System.out.println("Khalti initiate request: " + requestBody);
             post.setEntity(new StringEntity(requestBody));
-            return client.execute(post, response -> EntityUtils.toString(response.getEntity()));
+
+            try (CloseableHttpResponse response = client.execute(post)) {
+                String responseBody = EntityUtils.toString(response.getEntity());
+                System.out.println("Khalti initiate response: " + responseBody);
+
+                if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                    throw new PaymentException("Khalti API error: " + response.getStatusLine().getReasonPhrase());
+                }
+
+                return responseBody;
+            }
         }
     }
 
@@ -180,16 +239,26 @@ public class PaymentServiceImpl implements PaymentService {
             HttpPost post = new HttpPost(khaltiBaseUrl + "/epayment/lookup/");
             post.setHeader("Authorization", "Key " + khaltiSecretKey);
             post.setHeader("Content-Type", "application/json");
-            post.setEntity(new StringEntity("{\"pidx\":\"" + pidx + "\"}"));
-            return client.execute(post, response -> EntityUtils.toString(response.getEntity()));
+
+            String requestBody = "{\"pidx\":\"" + pidx + "\"}";
+            System.out.println("Khalti verification request: " + requestBody);
+            post.setEntity(new StringEntity(requestBody));
+
+            try (CloseableHttpResponse response = client.execute(post)) {
+                String responseBody = EntityUtils.toString(response.getEntity());
+                System.out.println("Khalti verification response status: " + response.getStatusLine().getStatusCode());
+                System.out.println("Khalti verification response body: " + responseBody);
+
+                if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                    throw new PaymentException("Khalti verification API error: " + response.getStatusLine().getReasonPhrase());
+                }
+
+                return responseBody;
+            }
         }
     }
 
     private void grantResourceAccess(Payment payment) {
-        if (customerResourceRepo.existsByCustomerAndResource(payment.getCustomer(), payment.getResource())) {
-            throw new PaymentException("Resource access already granted");
-        }
-
         CustomerResource customerResource = new CustomerResource();
         customerResource.setCustomer(payment.getCustomer());
         customerResource.setResource(payment.getResource());
@@ -202,7 +271,14 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private String extractJsonField(String json, String field) throws Exception {
-        return objectMapper.readTree(json).get(field).asText();
+        JsonNode node = objectMapper.readTree(json);
+        JsonNode fieldNode = node.get(field);
+
+        if (fieldNode == null) {
+            throw new PaymentException("Required field '" + field + "' not found in response");
+        }
+
+        return fieldNode.asText();
     }
 
     // Helper class for Khalti request
@@ -215,6 +291,6 @@ public class PaymentServiceImpl implements PaymentService {
             String name,
             String email,
             String phone
-    ) {}
+    ) {
+    }
 }
-

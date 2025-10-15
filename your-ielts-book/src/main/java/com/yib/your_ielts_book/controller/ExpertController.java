@@ -27,11 +27,12 @@ public class ExpertController {
     @Autowired
     private WritingTestUserService writingTestUserService;
 
-    @PostMapping("/resource")
-    public ResponseEntity<ResourceDTO> createResources(@Valid @RequestBody ResourceDTO resourceDTO,
+    @PostMapping(value = "/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE )
+    public ResponseEntity<ResourceDTO> createResources(@Valid @ModelAttribute ResourceDTO resourceDTO,
+                                            @RequestPart("pdfFile") MultipartFile pdfFile,
                                             @RequestHeader("Authorization") String jwt){
         try {
-            ResourceDTO createdResource = resourceService.createResource(resourceDTO, jwt);
+            ResourceDTO createdResource = resourceService.createResource(resourceDTO, pdfFile, jwt);
             return new ResponseEntity<>(createdResource, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

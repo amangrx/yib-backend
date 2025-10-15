@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
 
@@ -20,12 +21,15 @@ public class ResourceDTO {
     private String category;
     @NotEmpty(message = "Description cannot be empty.")
     private String description;
-    @NotEmpty(message = "Content cannot be empty.")
-    private String content;
+    private String pdfFilePath;
     private Date createdAt;
     private int expertId;
     private String author;
     private ResourceStatus status;
     private ResourceType type;
     private double price;
+    // For frontend access (generated URLs)
+    private String pdfFileUrl;
+    // Transient fields for file upload (not persisted)
+    private transient MultipartFile pdfFile;
 }

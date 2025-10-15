@@ -1,13 +1,15 @@
 package com.yib.your_ielts_book.controller;
 
 import com.yib.your_ielts_book.dto.*;
-import com.yib.your_ielts_book.model.Resource;
+import com.yib.your_ielts_book.model.ResourceType;
 import com.yib.your_ielts_book.response.ResponseMessage;
 import com.yib.your_ielts_book.service.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -40,10 +42,10 @@ public class CustomerController {
     //Register customer REST API
     @PostMapping(path = "/register")
     public ResponseEntity<?> registerNewCustomer(@RequestPart("customerDTO") @Valid CustomerDTO customerDTO,
-                                                 @RequestPart("profilePicture") MultipartFile profilePicture)  {
-        try{
+                                                 @RequestPart("profilePicture") MultipartFile profilePicture) {
+        try {
             return new ResponseEntity<>(customerService.registerNewCustomer(customerDTO, profilePicture), HttpStatus.CREATED);
-        }catch(Exception e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
@@ -78,25 +80,51 @@ public class CustomerController {
                 : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    //Search resource api
     @GetMapping("/search")
-    public ResponseEntity<Page<Resource>> searchResources(
+    public ResponseEntity<Page<ResourceDTO>> searchResources(
             @RequestParam String title,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size) {
-        Page<Resource> resources = resourceService.searchByTitle(title, PageRequest.of(page, size));
+            @RequestParam(defaultValue = "9") int size) {
+        System.out.println("Search result title" + title);
+        Page<ResourceDTO> resources = resourceService.searchByTitle(title, PageRequest.of(page, size));
+        System.out.println("Search result page" + resources.getNumberOfElements());
         return ResponseEntity.ok(resources);
     }
 
+    //Writing question api
     @GetMapping("/test/writing")
     public ResponseEntity<List<WritingQuestionDTO>> getAllWritingQuestions() {
         List<WritingQuestionDTO> questions = writingQuestionService.getAllWritingQuestions();
         return ResponseEntity.ok(questions);
     }
 
+    //Reading and listening question api
     @GetMapping("/test/reading-listening")
     public ResponseEntity<List<ReadingAndListeningQuestionDTO>> getAllReadingAndListeningQuestions() {
         List<ReadingAndListeningQuestionDTO> questions = readingAndListeningQuestionService.getAllReadingAndListeningQuestions();
         return ResponseEntity.ok(questions);
+    }
+
+    //Filtering resources
+    @GetMapping("/resources/filter")
+    public ResponseEntity<Page<ResourceDTO>> filterResources(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) ResourceType type,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "9") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ResourceDTO> resources = resourceService.filterResources(
+                category, type, minPrice, maxPrice, pageable);
+
+        return new ResponseEntity<>(resources, HttpStatus.OK);
     }
 }
 

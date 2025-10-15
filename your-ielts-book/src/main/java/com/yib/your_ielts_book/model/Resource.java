@@ -29,7 +29,7 @@ public class Resource {
     private String description;
 
     @Column(nullable = false)
-    private String content;
+    private String pdfFilePath;
 
     @Column(nullable = false)
     private Date createdAt;
